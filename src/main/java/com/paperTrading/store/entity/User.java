@@ -24,6 +24,6 @@ public class User {
     )
     private String email;
 
-    @Column(nullable = false)
-    private Double coins = 0.0;
+//    @Column(nullable = false)
+//    private Double coins = 0.0;
 }

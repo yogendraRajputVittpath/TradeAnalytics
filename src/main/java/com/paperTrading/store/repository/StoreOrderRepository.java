@@ -8,7 +8,5 @@ import java.util.List;
 public interface StoreOrderRepository
         extends JpaRepository<StoreOrder, Long> {
 
-    List<StoreOrder>
-    findByUserIdOrderByIdDesc(
-            Long userId);
+    List<StoreOrder>findByUserIdOrderByIdDesc(Long userId);
 }

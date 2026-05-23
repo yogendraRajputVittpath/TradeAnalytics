@@ -14,7 +14,7 @@ public class PlaceOrderRequest {
     private String customerName;
 
     @Pattern(
-            regexp = "^[6-9]\\\\d{9}$",
+            regexp = "^[6-9]\\d{9}$",
             message = "Invalid mobile number"
     )
     private String mobileNumber;
