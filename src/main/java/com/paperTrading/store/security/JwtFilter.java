@@ -20,6 +20,11 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Skip CORS preflight requests completely
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,

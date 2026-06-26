@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/store")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin
 public class StoreController {
 
     private final StoreService storeService;
