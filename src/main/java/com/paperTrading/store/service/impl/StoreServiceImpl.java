@@ -7,6 +7,7 @@ import com.paperTrading.store.entity.Product;
 import com.paperTrading.store.entity.StoreOrder;
 import com.paperTrading.store.entity.StoreOrderItem;
 import com.paperTrading.store.entity.Wallet;
+import com.paperTrading.store.entity.WalletTransaction;
 import com.paperTrading.store.enums.OrderStatus;
 import com.paperTrading.store.exception.InsufficientCoinsException;
 import com.paperTrading.store.exception.OutOfStockException;
@@ -15,8 +16,12 @@ import com.paperTrading.store.repository.ProductRepository;
 import com.paperTrading.store.repository.StoreOrderRepository;
 import com.paperTrading.store.repository.UserRepository;
 import com.paperTrading.store.repository.WalletRepository;
+import com.paperTrading.store.repository.WalletTransactionRepository;
 import com.paperTrading.store.service.StoreService;
 import com.paperTrading.store.util.OrderIdGenerator;
+import com.paperTrading.store.util.TransactionReason;
+import com.paperTrading.store.util.TransactionType;
+import com.paperTrading.store.util.TransactionStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +31,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -37,7 +44,8 @@ public class StoreServiceImpl implements StoreService {
     private final StoreOrderRepository storeOrderRepository;
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
-
+    private final WalletTransactionRepository transactionRepository;
+    
     @Override
     public ApiResponse<?> getAllProducts() {
 
@@ -107,9 +115,7 @@ public class StoreServiceImpl implements StoreService {
             throw new InsufficientCoinsException("Insufficient coins");
         }
 
-        wallet.setTotalAmount(wallet.getTotalAmount()- totalAmount);
-
-        walletRepository.save(wallet);
+       
 
         String orderId =OrderIdGenerator.generateOrderId();
 
@@ -130,6 +136,12 @@ public class StoreServiceImpl implements StoreService {
         storeOrder.setItems(orderItems);
 
         storeOrderRepository.save(storeOrder);
+        
+//        wallet.setTotalAmount(wallet.getTotalAmount()- totalAmount);
+//
+//        walletRepository.save(wallet);
+        
+        deductCoins(user.getId(), totalAmount,TransactionReason.STORE_PURCHASE, "Product purchased");
 
         log.info("Order placed successfully with orderId : {}",orderId);
 
@@ -143,6 +155,81 @@ public class StoreServiceImpl implements StoreService {
                 .message("Order placed successfully")
                 .data(response)
                 .build();
+    }
+    
+    
+    @Transactional
+    private void deductCoins(Long userId,
+                            double coins,
+                            TransactionReason reason,
+                            String note) {
+
+        log.info("Deduct coins started | userId={} | coins={}",
+                userId, coins);
+
+        try {
+
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() ->
+                            new RuntimeException("Wallet not found"));
+
+            if (wallet.getTotalAmount() < coins) {
+
+                log.error("Insufficient balance | userId={}", userId);
+
+                throw new RuntimeException("Insufficient wallet balance");
+            }
+
+            wallet.setTotalAmount(wallet.getTotalAmount() - coins);
+
+            walletRepository.save(wallet);
+
+            recordTransaction(
+                    userId,
+                    BigDecimal.valueOf(coins),
+                    TransactionType.DEBIT,
+                    TransactionStatus.SUCCESS,
+                    reason,
+                    note
+            );
+
+            log.info("Coins deducted successfully | userId={} | remaining={}",
+                    userId,
+                    wallet.getTotalAmount());
+
+        } catch (Exception ex) {
+
+            log.error("Failed to deduct coins | userId={}",
+                    userId,
+                    ex);
+
+            recordTransaction(
+                    userId,
+                    BigDecimal.valueOf(coins),
+                    TransactionType.DEBIT,
+                    TransactionStatus.FAILED,
+                    reason,
+                    ex.getMessage()
+            );
+
+            throw ex;
+        }
+    }
+    
+    public void recordTransaction(Long userId, BigDecimal amount, TransactionType type, 
+            TransactionStatus status, TransactionReason reason, String note) {
+		WalletTransaction txn = WalletTransaction.builder()
+		.txnId(UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+		.userId(userId)
+		.amount(amount)
+		.txnType(type)
+		.status(status)
+		.txnReason(reason.toString())
+		.note(note)
+		.createdAt(LocalDateTime.now())
+		.build();
+		
+		transactionRepository.save(txn);
     }
     
     @Override

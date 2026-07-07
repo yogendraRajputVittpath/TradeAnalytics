@@ -23,7 +23,6 @@ public class PlaceOrderRequest {
     private String email;
 
     @NotBlank(message = "Address required")
-    @Size(min = 10, max = 300)
     private String address;
 
     @NotBlank(message = "City required")
