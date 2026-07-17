@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import com.paperTrading.store.enums.OrderStatus;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -56,4 +57,5 @@ public class StoreOrder {
 
     @CreationTimestamp
     private Timestamp createdAt;
+
 }

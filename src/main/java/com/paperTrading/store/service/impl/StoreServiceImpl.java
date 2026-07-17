@@ -254,13 +254,27 @@ public class StoreServiceImpl implements StoreService {
 
             for (StoreOrderItem item : order.getItems()) {
 
-                Map<String, Object> itemMap = new LinkedHashMap<>();
+            	Map<String, Object> itemMap = new LinkedHashMap<>();
 
-                itemMap.put("product_id", item.getProductId());
-                itemMap.put("product_name", item.getProductName());
-                itemMap.put("price", item.getProductPrice());
+            	itemMap.put("orderId", order.getOrderId());
+            	itemMap.put("orderDate", order.getCreatedAt()); 
+            	itemMap.put("orderStatus", order.getStatus());
+            	itemMap.put("totalAmount", order.getTotalAmount());
 
-                items.add(itemMap);
+            	itemMap.put("customerName", order.getCustomerName());
+            	itemMap.put("mobileNumber", order.getMobileNumber());
+            	itemMap.put("email", order.getEmail());
+
+            	itemMap.put("address", order.getAddress());
+            	itemMap.put("city", order.getCity());
+            	itemMap.put("state", order.getState());
+            	itemMap.put("pincode", order.getPincode());
+
+            	itemMap.put("productId", item.getProductId());
+            	itemMap.put("productName", item.getProductName());
+            	itemMap.put("productPrice", item.getProductPrice());
+
+            	items.add(itemMap);
             }
         }
 
