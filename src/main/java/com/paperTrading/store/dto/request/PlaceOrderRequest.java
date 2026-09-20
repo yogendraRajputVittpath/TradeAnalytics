@@ -11,6 +11,7 @@ import java.util.List;
 public class PlaceOrderRequest {
 
     @NotBlank(message = "Customer name required")
+    @Pattern(regexp = "^[A-Za-z ]+$", message = "Invalid Customer Name")
     private String customerName;
 
     @Pattern(
